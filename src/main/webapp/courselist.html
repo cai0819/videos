@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>课程展示</title>
+    <style type="text/css">
+        #content{
+            margin:20px auto;
+        }
+        h3 {
+            text-align: center;
+        }
+    </style>
+    <link rel="stylesheet" href="layui/css/layui.css" />
+    <script type="text/javascript" src="layui/layui.js" ></script>
+    <script type="text/javascript" src="js/jquery-1.12.2.min.js" ></script>
+</head>
+<body>
+<div>
+
+    <div id="content">
+        <div class="layui-form searchDiv">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label"></label>
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input"placeholder="请输入课程名字" id="test1">
+                    </div>
+                </div>
+                <button type="button" class="layui-btn" data-type="reload">查询</button>
+            </div>
+        </div>
+    </div>
+</div>
+<table class="layui-hide" id="demo" lay-filter="test"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">更新</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use(['laydate', 'laypage', 'layer', 'table', 'carousel', 'upload', 'element', 'slider'], function(){
+        var laydate = layui.laydate //日期
+            ,laypage = layui.laypage //分页
+            ,layer = layui.layer //弹层
+            ,table = layui.table //表格
+            ,element = layui.element //元素操作
+
+
+        //执行一个 table 实例
+        table.render({
+            elem: '#demo'
+            ,id:"transferTable"
+            ,height: 540
+            ,url: 'course/page.do' //数据接口
+            ,title: '用户表'
+            ,page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                layout: ['limit', 'count', 'prev', 'page', 'next', 'skip'] //自定义分页布局
+                //,curr: 5 //设定初始在第 5 页
+                ,groups: 3//只显示 1 个连续页码
+                ,first: false //不显示首页
+                ,last: false //不显示尾页
+                ,limits:[5,10,20]
+
+            } //开启分页
+            , toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+            , totalRow: true //开启合计行
+            ,cols: [[ //表头
+                {checkbox: true, align: 'center', LAY_CHECKED: false, filter: 'test'}
+                , {field: 'id', title: '课程ID', width:80, sort: true}
+                ,{field: 'courseTitle', title: '课程名字', width:220}
+                ,{field: 'courseDesc', title: '课程介绍', width:500, sort: true}
+                ,{field: 'subjectName', title: '所属学科', width:200, sort: true}
+                ,{fixed: 'right', width: 165, align: 'center', toolbar: '#barDemo'}
+            ]]
+        });
+
+        var active = {
+            reload: function(){
+                //执行重载
+                table.reload('transferTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: { // 额外需要提交的参数
+
+                        courseTitle:$("#test1").val(),
+
+                    }
+                });
+            }
+        };
+        $('.searchDiv .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+        table.on('toolbar(test)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id)
+                , data = checkStatus.data; //获取选中的数据
+            switch (obj.event) {
+                case 'add':
+                    layer.open({
+                        type: 2 //此处以iframe举例
+                        , title: '添加课程'
+                        , area: ['800px', '600px']
+                        , content: 'addCourse.html'
+                    })
+                    break;
+                case 'delete':
+                    if (data.length === 0) {
+                        layer.msg('请选择一行');
+                    } else {
+                        var ids = "";
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                if (i == 0) {
+                                    ids += data[i].id;
+                                } else {
+                                    ids += "," + data[i].id;
+                                }
+                            }
+                        }
+                        layer.confirm('确认要删除' + ids, function (index) {
+                            $.ajax({
+                                type: "post",
+                                url: "course/deleteIds.do",
+                                data: {"ids": ids},
+                                dataType: "json",
+                                success: function (data) {
+                                    if (data.code == 1) {
+                                        layer.msg('删除成功！', {icon: 1});
+                                        // $(".layui-form-checked").not('.header').parents('tr').remove();
+                                        table.reload('transferTable');
+                                    } else {
+                                        alert(data.info);
+                                    }
+                                }
+                            });
+                        });
+
+                    }
+                    break;
+            };
+        });
+        //监听行工具事件
+        table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data //获得当前行数据
+                ,layEvent = obj.event; //获得 lay-event 对应的值
+            if(layEvent === 'del'){
+                layer.confirm('真的删除么', function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.ajax({
+                        type:"get",
+                        url:"course/delete.do?id=" + data.id,
+                        dataType:"json",
+                        success:function(data){
+                            if(data.code == 1){
+                                table.reload('demo');
+                            }else{
+                                alert(data.info);
+                            }
+                        }
+                    })
+                });
+            } else if(layEvent === 'edit'){
+                //layer.msg('编辑操作');
+                layer.open({
+                    type: 2 //此处以iframe举例
+                    , title: '修改课程'
+                    , area: ['800px', '600px']
+                    , content: 'updateCourse.html?id=' + data.id
+                })
+            }
+        });
+    })
+
+
+</script>
+
+
+
+</body>
+</html>

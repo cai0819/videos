@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qfedu.dao.VideoDao">
+
+    <select id="findAll"  parameterType="map"  resultType="com.qfedu.vo.VVideoInfo">
+        select * from video v inner join speaker s
+        <where>
+            v.speaker_id = s.id
+            <if test="title != '' and title != null">
+                and title like concat('%', #{title}, '%')
+            </if>
+
+            <if test="speakerId != null &amp;&amp; speakerId !=''">
+                and speaker_id =#{speakerId}
+            </if>
+            <if test="courseId != null &amp;&amp; courseId !=''">
+                and course_id =#{courseId}
+            </if>
+
+        </where>
+    </select>
+
+    <insert id="add" parameterType="video">
+        insert into video(title,speaker_id,course_id,time,image_url,video_url,detail)
+        values(#{title},#{speakerId},#{courseId},#{time},#{imageUrl},#{videoUrl},#{detail})
+    </insert>
+
+    <update id="update" parameterType="video">
+        update video
+        <set>
+        <if test="title != null and title != ''">
+            title=#{title},
+        </if>
+        <if test="detail != null and detail != ''">
+            detail=#{detail},
+        </if>
+        <if test="time != null and time != ''">
+            time=#{time},
+        </if>
+        <if test="speakerId != null and speakerId != ''">
+            speaker_id=#{speakerId},
+        </if>
+        <if test="speakerId != null and speakerId != ''">
+            course_id=#{courseId},
+        </if>
+        <if test="videoUrl != null and videoUrl != ''">
+            video_url=#{videoUrl},
+        </if>
+        <if test="imageUrl != null and imageUrl != ''">
+            image_url=#{imageUrl},
+        </if>
+
+
+        </set>
+        where id=#{id};
+    </update>
+
+    <select id="findById" parameterType="int" resultType="video">
+        select * from video where id=#{id}
+    </select>
+
+    <delete id="deleteById" parameterType="int">
+        delete from video where id =#{id}
+    </delete>
+    <delete id="deleteByIds" parameterType="map">
+        <!-- foreach 遍历
+            collenction 遍历的元素
+            item 遍历的元素的临时变量名
+            open、close 遍历出来的数据，使用哪些指定非符号包裹
+            sepator 遍历的元素之间使用的分隔符
+         -->
+        delete from video where id in
+        <foreach collection="array" item="id" open="(" close=")" separator="," >
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <resultMap id="videoMap" type="video">
+        <id property="id" column="id"></id>
+        <result property="title" column="title"></result>
+        <result property="detail" column="detail"></result>
+        <result property="time" column="time"></result>
+        <result property="courseId" column="course_id"></result>
+        <result property="speakerId" column="speaker_id"></result>
+        <result property="videoUrl" column="video_url"></result>
+        <result property="imageUrl" column="image_url"></result>
+        <result property="playNum" column="play_num"></result>
+        <association property="speaker" javaType="speaker">
+            <id property="id" column="sid"></id>
+            <result property="speakerName" column="speaker_name"></result>
+            <result property="speakerDetail" column="speaker_detail"></result>
+            <result property="speakerDesc" column="speaker_desc"></result>
+            <result property="speakerJob" column="speaker_job"></result>
+            <result property="headImgUrl" column="head_img_url"></result>
+        </association>
+    </resultMap>
+
+    <select id="findVideoAndSpeaker" parameterType="int" resultMap="videoMap">
+        select v.*,
+               s.id as sid, s.speaker_name, s.speaker_desc, s.speaker_job, s.head_img_url
+        from video v
+        inner join speaker s
+        on v.speaker_id = s.id
+        where v.id = #{id}
+    </select>
+
+
+    <update id="updatePlayNum" parameterType="map">
+        update video
+        set play_num = #{playNum}
+        where id = #{videoId}
+    </update>
+
+</mapper>

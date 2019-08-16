@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qfedu.dao.UserDao">
+    <select id="login" parameterType="string"  resultType="user">
+        select * from user where email=#{email}
+    </select>
+
+    <select id="findById" parameterType="int" resultType="user">
+        select * from user where id = #{id}
+    </select>
+
+    <update id="update" parameterType="user">
+        update user
+        <set>
+            <if test="nickName!= null and nickName !=''">
+                nickName=#{nickName},
+            </if>
+            <if test="sex != null and sex !=''">
+                sex =#{sex},
+            </if>
+            <if test="birthday != null and birthday !=''">
+                birthday =#{birthday},
+            </if>
+            <if test="email != null and email !=''">
+                email = #{email},
+            </if>
+            <if test="address != null and address !=''">
+                address = #{address},
+            </if>
+        </set>
+        where id = #{id};
+    </update>
+
+    <update id="uploadHeadImg" parameterType="map">
+        update user
+        <set>
+            <if test="imgUrl != null and imgUrl != '' ">
+                imgUrl = #{imgUrl},
+            </if>
+        </set>
+        where id = #{id};
+    </update>
+
+
+    <update id="updatePassword" parameterType="map">
+        update user
+        <set>
+            <if test="password != null and password != '' ">
+                password = #{password},
+            </if>
+        </set>
+        where id = #{id};
+    </update>
+
+    <insert id="register" parameterType="map">
+        insert into user(email, password, createTime)
+        values (#{email}, #{password}, #{createTime})
+    </insert>
+
+
+</mapper>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qfedu.dao.SpeakerDao">
+
+    <select id="findAll"  parameterType="map"  resultType="com.qfedu.entity.Speaker">
+        select * from speaker
+        <where>
+            <if test="speakerName !=''&amp;&amp; speakerName !=null">
+                speaker_name =#{speakerName}
+            </if>
+            <if test="id != null &amp;&amp; id !=''">
+                and id =#{id}
+            </if>
+        </where>
+    </select>
+
+    <insert id="add" parameterType="speaker">
+        insert into speaker(speaker_name,speaker_desc,speaker_job,head_img_url)
+        values(#{speakerName},#{speakerDesc},#{speakerJob},#{headImgUrl})
+    </insert>
+
+    <update id="update" parameterType="speaker">
+        update speaker
+        <set>
+            <if test="speakerName != null and speakerName != ''">
+                speaker_name=#{speakerName},
+            </if>
+            <if test="speakerDesc != null and speakerDesc != ''">
+                speaker_desc=#{speakerDesc},
+            </if>
+            <if test="speakerJob != null and speakerJob != ''">
+                speaker_job=#{speakerJob},
+            </if>
+            <if test="headImgUrl != null and headImgUrl != ''">
+                head_img_url=#{headImgUrl},
+            </if>
+        </set>
+        where id=#{id};
+    </update>
+
+    <select id="findById" parameterType="int" resultType="speaker">
+        select * from speaker where id=#{id}
+    </select>
+
+    <delete id="deleteById" parameterType="int">
+        delete from speaker where id =#{id}
+    </delete>
+    <select id="findAllSpeaker"   resultType="com.qfedu.entity.Speaker">
+        select * from speaker
+    </select>
+
+    <delete id="deleteByIds" parameterType="map">
+        <!-- foreach 遍历
+            collenction 遍历的元素
+            item 遍历的元素的临时变量名
+            open、close 遍历出来的数据，使用哪些指定非符号包裹
+            sepator 遍历的元素之间使用的分隔符
+         -->
+        delete from speaker where id in
+        <foreach collection="array" item="id" open="(" close=")" separator="," >
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

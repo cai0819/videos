@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qfedu.dao.CourseDao">
+
+    <select id="findAll"  parameterType="map"  resultType="com.qfedu.vo.VCourseInfo">
+        select c.*,s.subject_name from course c inner join subject s
+        <where>
+            c.subject_id = s.id
+            <if test="courseTitle != '' &amp;&amp; courseTitle != null">
+                and course_title like concat('%', #{courseTitle}, '%')
+            </if>
+        </where>
+
+
+
+    </select>
+
+    <insert id="add" parameterType="course">
+        insert into course(course_title,course_desc,subject_id)
+        values(#{courseTitle},#{courseDesc},#{subjectId})
+    </insert>
+
+    <update id="update" parameterType="course">
+        update course
+        <set>
+            <if test="courseTitle != null and courseTitle != ''">
+                course_title=#{courseTitle},
+            </if>
+            <if test="courseDesc != null and courseDesc != ''">
+                course_desc=#{courseDesc},
+            </if>
+            <if test="subjectId != null and subjectId != ''">
+                subject_id=#{subjectId},
+            </if>
+        </set>
+        where id=#{id};
+    </update>
+
+    <select id="findById" parameterType="int" resultType="course">
+        select * from course where id=#{id}
+    </select>
+
+    <delete id="deleteById" parameterType="int">
+        delete from course where id =#{id}
+    </delete>
+    <select id="findAllCourse"  resultType="com.qfedu.entity.Course">
+        select * from course
+    </select>
+
+    <delete id="deleteByIds" parameterType="map">
+        <!-- foreach 遍历
+            collenction 遍历的元素
+            item 遍历的元素的临时变量名
+            open、close 遍历出来的数据，使用哪些指定非符号包裹
+            sepator 遍历的元素之间使用的分隔符
+         -->
+        delete from course where id in
+        <foreach collection="array" item="id" open="(" close=")" separator="," >
+            #{id}
+        </foreach>
+    </delete>
+    <resultMap id="courseMap" type="course">
+        <id property="id" column="id"></id>
+        <result property="courseTitle" column="course_title"></result>
+        <result property="courseDesc" column="course_desc"></result>
+        <result property="subjectId" column="subjec_id"></result>
+        <collection property="videoList" ofType="com.qfedu.vo.VVideoInfo" javaType="list">
+            <id property="id" column="vid"></id>
+            <result property="title" column="title"></result>
+            <result property="detail" column="detail"></result>
+            <result property="time" column="time"></result>
+            <result property="showTime" column="time"></result>
+            <result property="courseId" column="course_id"></result>
+            <result property="videoUrl" column="video_url"></result>
+            <result property="imageUrl" column="image_url"></result>
+            <result property="playNum" column="play_num"></result>
+            <result property="showTime" column="time"></result>
+            <result property="speakerName" column="speaker_name"></result>
+            <association property="speaker" javaType="speaker">
+                <id property="id" column="sid"></id>
+                <result property="speakerName" column="speaker_name"></result>
+                <result property="speakerDetail" column="speaker_detail"></result>
+                <result property="speakerDesc" column="speaker_desc"></result>
+                <result property="speakerJob" column="speaker_job"></result>
+                <result property="headImgUrl" column="head_img_url"></result>
+            </association>
+        </collection>
+    </resultMap>
+    <select id="findCourseAndVideo" parameterType="int" resultMap="courseMap">
+        select c.*,
+               v.id as vid, v.title, v.detail, v.time, v.speaker_id, v.course_id, v.video_url, v.image_url, v.play_num,
+               s.id as sid, s.speaker_name, s.speaker_desc, s.speaker_job, s.head_img_url
+        from course c
+        inner join video v
+        on c.id = v.course_id
+        inner join speaker s
+        on v.speaker_id = s.id
+        where c.id = #{id}
+    </select>
+</mapper>
